@@ -24,6 +24,7 @@ from cloudify.utils import LocalCommandRunner
 from cloudify.utils import get_is_bypass_maintenance
 
 from cloudify_agent.api import utils
+from cloudify_agent.api.plugins.installer import PluginInstaller
 from cloudify_agent.shell import env
 
 
@@ -65,6 +66,10 @@ class AgentInstaller(object):
         else:
             self.logger.info('Creating agent from package')
             self._from_package()
+
+        self.logger.info('Installing plugins for agent')
+        self._install_agent_plugins()
+
         self.run_daemon_command(
             command='create {0}'
             .format(self._create_process_management_options()),
@@ -131,6 +136,13 @@ class AgentInstaller(object):
                      destination=self.cloudify_agent['agent_dir'])
 
         self.run_agent_command('configure {0}'.format(self._configure_flags()))
+
+    def _install_agent_plugins(self):
+        required_plugins = self.cloudify_agent['plugins']
+
+        pi = PluginInstaller()
+        for plugin in required_plugins:
+            pi.install(plugin)
 
     def _configure_flags(self):
         flags = ''

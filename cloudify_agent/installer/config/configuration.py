@@ -265,4 +265,7 @@ def installation_attributes(cloudify_agent, runner):
                 basedir = '~{0}'.format(cloudify_agent['user'])
         cloudify_agent['basedir'] = basedir
 
+    if not cloudify_agent.get('plugins'):
+        cloudify_agent['plugins'] = []
+
     directory_attributes(cloudify_agent)
