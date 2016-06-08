@@ -145,15 +145,13 @@ class AgentInstaller(object):
 
         pi = PluginInstaller()
         for plugin in required_plugins:
-            pi.install(plugin)
-
-        self.logger.info('Installing plugin: {0}'.format(plugin['name']))
-        try:
-            pi.install(plugin)
-        except exceptions.PluginInstallationError as e:
-            # preserve traceback
-            tpe, value, tb = sys.exc_info()
-            raise NonRecoverableError, NonRecoverableError(str(e)), tb
+            self.logger.info('Installing plugin: {0}'.format(plugin['name']))
+            try:
+                pi.install(plugin)
+            except exceptions.PluginInstallationError as e:
+                # preserve traceback
+                tpe, value, tb = sys.exc_info()
+                raise NonRecoverableError, NonRecoverableError(str(e)), tb
 
     def _configure_flags(self):
         flags = ''
