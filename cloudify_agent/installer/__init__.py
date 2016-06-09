@@ -70,7 +70,7 @@ class AgentInstaller(object):
             self.logger.info('Creating agent from package')
             self._from_package()
 
-        self.logger.info('Installing plugins for agent')
+        self.logger.info('Installing agent specific plugins')
         self._install_agent_plugins()
 
         self.run_daemon_command(
@@ -145,7 +145,7 @@ class AgentInstaller(object):
 
         pi = PluginInstaller()
         for plugin in required_plugins:
-            self.logger.info('Installing plugin: {0}'.format(plugin['package_name']))
+            self.logger.info('Installing plugin: {0}'.format(plugin['name']))
             try:
                 pi.install(plugin)
             except exceptions.PluginInstallationError as e:

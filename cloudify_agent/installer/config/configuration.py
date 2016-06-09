@@ -129,8 +129,14 @@ def connection_attributes(cloudify_agent):
             raise_missing_attributes('key', 'password')
 
         if 'plugins' not in cloudify_agent:
-            cloudify_agent['plugins'] = \
-                ctx.node.properties.get('agent_config', {}).get('plugins', [])
+            plugins = \
+                ctx.node.properties.get('agent_config', {}).get('plugins', {})
+            plugins_list = []
+            for k, v in plugins.iteritems():
+                v['name'] = k
+                plugins_list.append(v)
+
+            cloudify_agent['plugins'] = plugins_list
 
 
 @group('cfy-agent')
