@@ -128,6 +128,10 @@ def connection_attributes(cloudify_agent):
                 cloudify_agent['remote_execution']:
             raise_missing_attributes('key', 'password')
 
+        if 'plugins' not in cloudify_agent:
+            cloudify_agent['plugins'] = \
+                ctx.node.properties.get('agent_config', {}).get('plugins', [])
+
 
 @group('cfy-agent')
 def cfy_agent_attributes(cloudify_agent):
@@ -264,8 +268,5 @@ def installation_attributes(cloudify_agent, runner):
             else:
                 basedir = '~{0}'.format(cloudify_agent['user'])
         cloudify_agent['basedir'] = basedir
-
-    if not cloudify_agent.get('plugins'):
-        cloudify_agent['plugins'] = []
 
     directory_attributes(cloudify_agent)

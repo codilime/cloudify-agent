@@ -145,7 +145,7 @@ class AgentInstaller(object):
 
         pi = PluginInstaller()
         for plugin in required_plugins:
-            self.logger.info('Installing plugin: {0}'.format(plugin['name']))
+            self.logger.info('Installing plugin: {0}'.format(plugin['package_name']))
             try:
                 pi.install(plugin)
             except exceptions.PluginInstallationError as e:
