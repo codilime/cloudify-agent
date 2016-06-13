@@ -41,9 +41,7 @@ from cloudify_agent.app import app
 from cloudify_agent.installer.config import configuration
 
 
-@operation
-def install_plugins(plugins, **_):
-    installer = PluginInstaller(logger=ctx.logger)
+def _install_plugins(installer, plugins):
     for plugin in plugins:
         ctx.logger.info('Installing plugin: {0}'.format(plugin['name']))
         try:
@@ -54,6 +52,20 @@ def install_plugins(plugins, **_):
             # preserve traceback
             tpe, value, tb = sys.exc_info()
             raise NonRecoverableError, NonRecoverableError(str(e)), tb
+
+
+@operation
+def install_plugins(plugins, **_):
+    installer = PluginInstaller(logger=ctx.logger)
+
+    cloudify_agent = ctx.instance.runtime_properties['cloudify_agent']
+    agent_plugins = cloudify_agent['plugins']
+    if agent_plugins:
+        ctx.logger.info('Installing agent specific plugins')
+        _install_plugins(installer, agent_plugins)
+
+    ctx.logger.info('Installing deployment plugins')
+    _install_plugins(installer, plugins)
 
 
 @operation

@@ -14,7 +14,6 @@
 #  * limitations under the License.
 
 import os
-import sys
 import tempfile
 import shutil
 import urllib
@@ -23,11 +22,8 @@ import copy
 from cloudify.utils import setup_logger
 from cloudify.utils import LocalCommandRunner
 from cloudify.utils import get_is_bypass_maintenance
-from cloudify.exceptions import NonRecoverableError
 
 from cloudify_agent.api import utils
-from cloudify_agent.api import exceptions
-from cloudify_agent.api.plugins.installer import PluginInstaller
 from cloudify_agent.shell import env
 
 
@@ -69,9 +65,6 @@ class AgentInstaller(object):
         else:
             self.logger.info('Creating agent from package')
             self._from_package()
-
-        self.logger.info('Installing agent specific plugins')
-        self._install_agent_plugins()
 
         self.run_daemon_command(
             command='create {0}'
@@ -139,19 +132,6 @@ class AgentInstaller(object):
                      destination=self.cloudify_agent['agent_dir'])
 
         self.run_agent_command('configure {0}'.format(self._configure_flags()))
-
-    def _install_agent_plugins(self):
-        required_plugins = self.cloudify_agent['plugins']
-
-        pi = PluginInstaller()
-        for plugin in required_plugins:
-            self.logger.info('Installing plugin: {0}'.format(plugin['name']))
-            try:
-                pi.install(plugin)
-            except exceptions.PluginInstallationError as e:
-                # preserve traceback
-                tpe, value, tb = sys.exc_info()
-                raise NonRecoverableError, NonRecoverableError(str(e)), tb
 
     def _configure_flags(self):
         flags = ''
