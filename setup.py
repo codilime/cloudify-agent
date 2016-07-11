@@ -70,6 +70,11 @@ setup(
     description='Cloudify Agent Implementation (Celery based)',
     install_requires=install_requires,
     license='LICENSE',
+    dependency_links=[
+        'https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/master.tar.gz#egg=cloudify-plugins-common-3.5a1',
+        'https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/master.tar.gz#egg=cloudify-dsl-parser-3.5a1',
+        'https://github.com/cloudify-cosmo/cloudify-rest-client/archive/master.tar.gz#egg=cloudify-rest-client-3.5a1',
+    ],
     entry_points={
         'console_scripts': [
             'cfy-agent = cloudify_agent.shell.main:main',
