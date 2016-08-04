@@ -13,11 +13,14 @@
 #  * See the License for the specific language governing permissions and
 #  * limitations under the License.
 
+import crypt
+import os
 import shutil
+import subprocess
 import tempfile
 import uuid
 
-from mock import patch
+from mock import patch, Mock
 
 from cloudify.workflows import local
 from cloudify.utils import setup_logger
@@ -30,8 +33,8 @@ from cloudify_agent.tests.utils import (
 from cloudify_agent.tests.api.pm import BaseDaemonLiveTestCase
 from cloudify_agent.tests.api.pm import only_ci, only_os
 from cloudify_agent.api import utils
-
-
+from cloudify_agent.tests import agent_package
+from unittest import TestCase
 ##############################################################################
 # these tests run a local workflow to install the agent on the local machine.
 # it should support both windows and linux machines. and thus, testing the
@@ -39,6 +42,72 @@ from cloudify_agent.api import utils
 # the remote use cases are tested as system tests because they require
 # actually launching VM's from the test.
 ##############################################################################
+
+FABRIC_TEST_USER = 'cfy_agent_test'
+FABRIC_TEST_PASSWORD = 'cfy_agent_test'
+
+
+import fabric.api
+from fabric.context_managers import settings
+from cloudify_agent.installer.runners.fabric_runner import FabricRunner
+from cloudify_agent.installer.linux import RemoteLinuxAgentInstaller
+
+from cloudify_agent.installer.config import configuration
+class FabricInstallerTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        subprocess.check_call([
+            'useradd', '-p', crypt.crypt(FABRIC_TEST_PASSWORD, '22'),
+            '-m',
+            FABRIC_TEST_USER
+        ])
+        # cls._package_url = agent_package.get_package_url()
+
+    @classmethod
+    def tearDownClass(cls):
+        subprocess.check_call(['userdel', '-fr', FABRIC_TEST_USER])
+
+    def test_foo(self):
+        fabric_env = {
+            'host_string': 'localhost',
+            'user': FABRIC_TEST_USER,
+            'password': FABRIC_TEST_PASSWORD
+        }
+        logger = Mock()
+        runner = FabricRunner(
+            host='localhost',
+            port=22,
+            user=FABRIC_TEST_USER,
+            password=FABRIC_TEST_PASSWORD,
+            logger=logger
+        )
+        agent_name = 'agent-' + uuid.uuid4().hex
+        # cloudify_agent = {
+        #     'name': agent_name,
+        #     'package_url': self._package_url,
+        #     'verify_rest_certificate': True,
+        #     'windows': False,
+        #     'local': False,
+        #     'basedir': os.path.join('/home', FABRIC_TEST_USER, agent_name),
+        #     'process_management': {
+        #         'name': 'init.d'
+        #     },
+        #     'queue': agent_name,
+        #     'file_server_host': 'localhost',
+        #     'rest_host': 'localhost',
+        #     'broker_ip': 'localhost',
+        #     'file_server_port': 80,
+        #     'file_server_protocol': 'http',
+        #     'broker_get_settings_from_manager': False
+        # }
+        cloudify_agent = {
+            'local_rest_cert_file': '~/certs/rest.crt',
+            'rest_cert_content': 'cert.cert.cert'
+        }
+        # configuration.directory_attributes(cloudify_agent)
+        installer = RemoteLinuxAgentInstaller(cloudify_agent, runner)
+        installer.upload_certificate()
+
 
 class AgentInstallerLocalTest(BaseDaemonLiveTestCase):
 
