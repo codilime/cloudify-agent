@@ -19,7 +19,7 @@ import urllib
 
 from contextlib import contextmanager
 
-from mock import patch, MagicMock
+from mock import patch, Mock, MagicMock
 
 from cloudify import constants
 from cloudify import context
@@ -282,3 +282,60 @@ class TestCreateAgentAmqp(BaseTest):
             self.assertNotEquals(old_queue, new_queue)
         finally:
             current_ctx.set(old_context)
+
+    @patch('cloudify.manager.get_rest_client', _MockRestclient)
+    @patch('cloudify_agent.operations._assert_agent_alive')
+    def _test_script_path(self, install_script, *_mocks):
+        blueprint_path = resources.get_resource(
+            'blueprints/install-new-agent/install-new-agent-test.yaml')
+
+        def _mock_send_task(task, kwargs, **_):
+            rv = Mock()
+            rv.get.return_value = {'name': kwargs['cloudify_agent']['name']}
+            return rv
+
+        env = local.init_env(name=self._testMethodName,
+                             blueprint_path=blueprint_path)
+        env.execute('execute_operation',
+                    task_retries=0,
+                    parameters={
+                        'operation': 'test.prepare',
+                        'node_ids': ['validator'],
+                    })
+        with patch('celery.Celery.send_task',
+                   side_effect=_mock_send_task) as m:
+            env.execute('execute_operation',
+                        task_retries=0,
+                        parameters={
+                            'operation': 'test.test',
+                            'node_ids': ['validator'],
+                            'operation_kwargs': {
+                                'install_script': install_script
+                            },
+                            'allow_kwargs_override': True
+                        })
+        _, args, kwargs = m.mock_calls[0]
+
+        return kwargs['kwargs']['script_path']
+
+    @only_ci
+    def test_script_path_absolute(self):
+        path = 'http://foo.com/install_agent.py'
+        script_path = self._test_script_path(path)
+        self.assertEqual(path, script_path)
+
+    @only_ci
+    def test_script_path_empty(self):
+        path = ''
+        script_path = self._test_script_path(path)
+        self.assertIn('install_agent.py', script_path)
+
+    @only_ci
+    def test_script_path_null(self):
+        path = None
+        script_path = self._test_script_path(path)
+        self.assertIn('install_agent.py', script_path)
+
+
+def set_cloudify_agent(ctx, cloudify_agent):
+    ctx.instance.runtime_properties['cloudify_agent'] = cloudify_agent

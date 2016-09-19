@@ -253,7 +253,7 @@ def _run_install_script(old_agent, timeout, validate_only=False,
     with _celery_client(ctx, old_agent) as celery_client:
         old_agent_name = old_agent['name']
         _assert_agent_alive(old_agent_name, celery_client, old_agent_version)
-        if install_script is None:
+        if not install_script:
             script_format = '{0}/cloudify/install_agent.py'
             install_script = script_format.format(
                 get_manager_file_server_url())

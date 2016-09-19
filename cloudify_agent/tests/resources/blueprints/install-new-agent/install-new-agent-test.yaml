@@ -1,0 +1,35 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.0m2/types.yaml
+
+node_templates:
+
+  validator:
+    type: cloudify.nodes.Root
+    interfaces:
+      test:
+        prepare:
+          implementation: agent.cloudify_agent.tests.test_operations.set_cloudify_agent
+          inputs:
+            cloudify_agent:
+              name: agent
+              queue: agent
+              ip: 127.0.0.1
+              rest_host: 127.0.0.1
+              local: true
+              broker_get_settings_from_manager: false
+              broker_ip: 127.0.0.1
+              windows: false
+              basedir: /
+              broker_config:
+                broker_ip: 127.0.0.1
+                broker_port: 5672
+                broker_ssl_enable: true
+        test:
+          implementation: agent.cloudify_agent.operations.validate_agent_amqp
+          executor: central_deployment_agent
+          inputs:
+            validate_agent_timeout: 20
+            fail_on_agent_not_installable: True
+            fail_on_agent_dead: True
